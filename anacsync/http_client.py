@@ -1,6 +1,7 @@
 """HTTP client with retry logic and rate limiting."""
 
 import asyncio
+import random
 import time
 from typing import Any, Dict, Optional, Tuple
 
@@ -21,6 +22,17 @@ class HTTPClient:
         self.config = config
         self.last_request_time = 0.0
         self.rate_limit = 1.0 / config.downloader.rate_limit_rps
+        self.session_cookies = {}
+        self.request_count = 0
+        
+        # User-Agent rotation for better stealth
+        self.user_agents = [
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0",
+            "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:119.0) Gecko/20100101 Firefox/119.0"
+        ]
         
         # Create httpx client
         self.client = httpx.Client(
@@ -31,7 +43,7 @@ class HTTPClient:
                 pool=config.http.timeout_connect_s  # Use connect timeout for pool
             ),
             http2=config.http.http2,
-            headers=config.http.headers,
+            headers=self._get_dynamic_headers(),
             follow_redirects=True
         )
     
@@ -46,6 +58,74 @@ class HTTPClient:
         #     time.sleep(sleep_time)
         
         self.last_request_time = time.time()
+    
+    def _get_dynamic_headers(self) -> Dict[str, str]:
+        """Generate dynamic headers that change between requests."""
+        user_agent = random.choice(self.user_agents)
+        
+        # Base headers that change dynamically
+        headers = {
+            "User-Agent": user_agent,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Linux"',
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1"
+        }
+        
+        # Add random variations to make requests look more natural
+        if random.random() < 0.3:  # 30% chance to add DNT header
+            headers["DNT"] = "1"
+        
+        if random.random() < 0.2:  # 20% chance to add Connection header
+            headers["Connection"] = "keep-alive"
+        
+        return headers
+    
+    def _simulate_human_behavior(self):
+        """Simulate human-like behavior with random delays."""
+        # Random delay between 0.5 and 2.0 seconds
+        delay = random.uniform(0.5, 2.0)
+        time.sleep(delay)
+        
+        # Occasionally add longer pauses (simulating reading)
+        if random.random() < 0.1:  # 10% chance
+            time.sleep(random.uniform(2.0, 5.0))
+    
+    def _update_session_cookies(self, response_headers: Dict[str, Any]):
+        """Update session cookies from response headers."""
+        set_cookie = response_headers.get('set-cookie')
+        if set_cookie:
+            # Parse cookies and store them
+            for cookie in set_cookie.split(','):
+                if '=' in cookie:
+                    name, value = cookie.split('=', 1)
+                    self.session_cookies[name.strip()] = value.strip().split(';')[0]
+    
+    def initialize_session(self):
+        """Initialize session by visiting the homepage first."""
+        console.print("[blue]Initializing browser session...[/blue]")
+        
+        # Visit homepage first to establish session
+        homepage_url = "https://dati.anticorruzione.it/"
+        try:
+            response = self.client.get(homepage_url, headers=self._get_dynamic_headers())
+            response.raise_for_status()
+            self._update_session_cookies(dict(response.headers))
+            console.print("[green]Session initialized successfully[/green]")
+        except Exception as e:
+            console.print(f"[yellow]Warning: Could not initialize session: {e}[/yellow]")
+        
+        # Small delay to simulate human behavior
+        time.sleep(random.uniform(1.0, 3.0))
     
     @retry(
         stop=stop_after_attempt(3),
@@ -76,10 +156,31 @@ class HTTPClient:
     def get(self, url: str, headers: Optional[Dict[str, str]] = None) -> Tuple[bytes, Dict[str, Any], Optional[str]]:
         """Make GET request and return content, headers, and error if any."""
         self._wait_for_rate_limit()
+        self._simulate_human_behavior()
+        
+        # Update request count and rotate headers
+        self.request_count += 1
+        
+        # Use dynamic headers for each request
+        dynamic_headers = self._get_dynamic_headers()
+        if headers:
+            dynamic_headers.update(headers)
+        
+        # Add referer for subsequent requests (simulate navigation)
+        if self.request_count > 1:
+            dynamic_headers["Referer"] = "https://dati.anticorruzione.it/opendata/dataset"
+        
+        # Add session cookies if available
+        if self.session_cookies:
+            cookie_string = "; ".join([f"{name}={value}" for name, value in self.session_cookies.items()])
+            dynamic_headers["Cookie"] = cookie_string
         
         try:
-            response = self.client.get(url, headers=headers)
+            response = self.client.get(url, headers=dynamic_headers)
             response.raise_for_status()
+            
+            # Update session cookies from response
+            self._update_session_cookies(dict(response.headers))
             
             # Debug logging
             content_length = len(response.content)

@@ -293,20 +293,14 @@ class ANACCrawler:
         
         with HTTPClient(self.config) as http_client:
             console.print(f"[blue]DEBUG: Created HTTPClient with config: {self.config.base_url}[/blue]")
+            
+            # Initialize browser session
+            http_client.initialize_session()
+            
             # Crawl dataset pages
             page_num = self.config.crawler.page_start
             empty_pages = 0
             all_datasets = []
-            
-            # Test HTTPClient before starting progress
-            console.print(f"[blue]DEBUG: Testing HTTPClient before crawl...[/blue]")
-            test_content, test_headers, test_error = http_client.get('https://dati.anticorruzione.it/opendata/dataset?page=1')
-            if test_error:
-                console.print(f"[red]HTTPClient test failed: {test_error}[/red]")
-                return stats
-            else:
-                test_html = test_content.decode('utf-8', errors='ignore')
-                console.print(f"[blue]HTTPClient test: {len(test_html)} characters, has datasets: {'dataset-item' in test_html}[/blue]")
             
             with Progress(
                 SpinnerColumn(),
