@@ -104,11 +104,8 @@ class ANACCrawler:
         datasets = []
         seen_slugs = set()
         
-        console.print(f"[blue]DEBUG: parse_dataset_page called with {len(html)} characters[/blue]")
-        
         # First, try to find dataset items with specific classes
         dataset_items = parser.css('.dataset-item')
-        console.print(f"[blue]DEBUG: Found {len(dataset_items)} .dataset-item elements[/blue]")
         
         for item in dataset_items:
             # Look for links within dataset items
@@ -148,12 +145,7 @@ class ANACCrawler:
         
         # If no dataset items found, fall back to finding all links with dataset URLs
         if not datasets:
-            console.print(f"[yellow]DEBUG: No datasets found via .dataset-item, trying fallback method[/yellow]")
             all_links = parser.css('a')
-            console.print(f"[blue]DEBUG: Found {len(all_links)} total links[/blue]")
-            
-            dataset_links = [link for link in all_links if '/opendata/dataset/' in link.attributes.get('href', '')]
-            console.print(f"[blue]DEBUG: Found {len(dataset_links)} links with /opendata/dataset/[/blue]")
             
             for link in all_links:
                 href = link.attributes.get('href')
@@ -257,7 +249,6 @@ class ANACCrawler:
         html = content.decode('utf-8', errors='ignore')
         datasets = self.parse_dataset_page(html, self.config.base_url)
         
-        console.print(f"[magenta]DEBUG: crawl_page({page_num}) -> {len(datasets)} datasets, has_content: {len(datasets) > 0}[/magenta]")
         
         return datasets, len(datasets) > 0
     
@@ -317,19 +308,15 @@ class ANACCrawler:
                 task = progress.add_task("Crawling dataset pages...", total=None)
                 
                 while empty_pages < self.config.crawler.empty_page_stop_after:
-                    console.print(f"[yellow]Crawling page {page_num}...[/yellow]")
                     datasets, has_content = self.crawl_page(page_num, http_client)
-                    console.print(f"[cyan]Page {page_num}: {len(datasets)} datasets, has_content: {has_content}[/cyan]")
                     
                     if has_content:
                         all_datasets.extend(datasets)
                         empty_pages = 0
                         progress.update(task, description=f"Crawling page {page_num}... Found {len(datasets)} datasets")
-                        console.print(f"[green]Added {len(datasets)} datasets. Total so far: {len(all_datasets)}[/green]")
                     else:
                         empty_pages += 1
                         progress.update(task, description=f"Page {page_num} empty ({empty_pages}/{self.config.crawler.empty_page_stop_after})")
-                        console.print(f"[red]Page {page_num} empty ({empty_pages}/{self.config.crawler.empty_page_stop_after})[/red]")
                     
                     page_num += 1
                     stats['pages_crawled'] += 1

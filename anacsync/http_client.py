@@ -6,9 +6,12 @@ from typing import Any, Dict, Optional, Tuple
 
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from rich.console import Console
 
 from .config import Config
 from .utils import jittered_delay, get_timestamp
+
+console = Console()
 
 
 class HTTPClient:
@@ -74,11 +77,9 @@ class HTTPClient:
         self._wait_for_rate_limit()
         
         try:
-            console.print(f"[blue]DEBUG: Making GET request to {url}[/blue]")
             response = self.client.get(url, headers=headers)
             response.raise_for_status()
             
-            console.print(f"[blue]DEBUG: Response status: {response.status_code}, content length: {len(response.content)}[/blue]")
             headers = dict(response.headers)
             return response.content, headers, None
             
