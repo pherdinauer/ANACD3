@@ -194,11 +194,12 @@ class ANACCrawler:
             if url in seen_urls:
                 continue
             
-            # Only look for direct download links that end with .json
-            # Skip resource page links - we only want direct downloads
+            # Look for direct download links that end with .json
+            # OR resource page links that might contain JSON files
             is_download_link = '/download/' in url and url.endswith('.json')
+            is_resource_link = '/resource/' in url
             
-            if not is_download_link:
+            if not (is_download_link or is_resource_link):
                 continue
             
             # Get resource name
@@ -212,8 +213,16 @@ class ANACCrawler:
                     if path_parts:
                         name = path_parts[-1]
             
-            # Determine format from extension - only JSON files
-            format_type = 'JSON'  # We only process JSON files now
+            # Determine format from extension or link name
+            if is_download_link:
+                # Direct download link - use extension
+                format_type = 'JSON'  # We only process JSON files now
+            else:
+                # Resource page link - check if name suggests JSON
+                if 'json' in name.lower() or 'JSON' in name:
+                    format_type = 'JSON'
+                else:
+                    continue  # Skip non-JSON resources
             
             # Only add if we have a valid name and format
             if name and format_type != 'UNKNOWN':
