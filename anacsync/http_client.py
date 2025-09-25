@@ -80,6 +80,13 @@ class HTTPClient:
             response = self.client.get(url, headers=headers)
             response.raise_for_status()
             
+            # Debug logging
+            content_length = len(response.content)
+            if content_length < 1000:  # Suspiciously short response
+                content_preview = response.content.decode('utf-8', errors='ignore')[:200]
+                console.print(f"[yellow]WARNING: Short response ({content_length} bytes) for {url}[/yellow]")
+                console.print(f"[yellow]Content preview: {content_preview}...[/yellow]")
+            
             headers = dict(response.headers)
             return response.content, headers, None
             
