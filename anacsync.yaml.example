@@ -1,0 +1,60 @@
+# ANAC Sync Configuration Example
+# Copy this file to ~/.anacsync/anacsync.yaml and customize as needed
+
+# Basic settings
+root_dir: "/database/JSON"
+base_url: "https://dati.anticorruzione.it/opendata"
+state_dir: "~/.anacsync"
+
+# Crawler settings
+crawler:
+  page_start: 1
+  empty_page_stop_after: 2
+  delay_ms_min: 300
+  delay_ms_max: 700
+  max_concurrency: 1
+  respect_robots: false
+
+# HTTP client settings
+http:
+  timeout_connect_s: 10
+  timeout_read_s: 60
+  http2: true
+  headers:
+    User-Agent: "anacsync/0.1 (+contact@example.com)"
+    Accept-Encoding: "identity"
+
+# Downloader settings
+downloader:
+  retries_per_strategy: 3
+  switch_after_seconds_without_progress: 300
+  strategies: ["s1_dynamic", "s2_sparse", "s3_curl", "s4_shortconn", "s5_tailfirst"]
+  dynamic_chunks_mb: [2, 6, 12]
+  sparse_segment_mb: 4
+  snail_chunks_kb: 1024
+  overlap_bytes: 32768
+  enable_curl: true
+  curl_path: "curl"
+  rate_limit_rps: 1.0
+
+# File sorting rules
+sorting:
+  rules:
+    - if: "slug matches '^ocds-appalti-ordinari'"
+      move_to: "/database/JSON/aggiudicazioni_json"
+    - if: "filename matches 'subappalti_.*\\.json'"
+      move_to: "/database/JSON/subappalti_json"
+    - if: "slug contains 'stazioni-appaltanti'"
+      move_to: "/database/JSON/stazioni-appaltanti_json"
+    - if: "format == 'CSV'"
+      move_to: "/database/JSON/csv_files"
+    - if: "format == 'XLSX'"
+      move_to: "/database/JSON/excel_files"
+    - if: "true"  # Default rule - must be last
+      move_to: "/database/JSON/_unsorted"
+
+# Logging settings
+logging:
+  level: "INFO"
+  file: "~/.anacsync/anacsync.log"
+

@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anacsync"
+version = "0.1.0"
+description = "Professional ANAC dataset crawler and downloader with multi-strategy download system"
+authors = [{name = "ANAC Sync Team", email = "contact@example.com"}]
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "httpx>=0.25.0",
+    "typer[all]>=0.9.0",
+    "rich>=13.0.0",
+    "pydantic>=2.0.0",
+    "tenacity>=8.0.0",
+    "python-dotenv>=1.0.0",
+    "selectolax>=0.3.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "ruff>=0.1.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+anacsync = "anacsync.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["anacsync*"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+select = ["E", "F", "W", "C90", "I", "N", "UP", "YTT", "S", "BLE", "FBT", "B", "A", "COM", "C4", "DTZ", "T10", "DJ", "EM", "EXE", "FA", "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLF", "SLOT", "SIM", "TID", "TCH", "INT", "ARG", "PTH", "TD", "FIX", "ERA", "PD", "PGH", "PL", "TRY", "FLY", "NPY", "AIR", "PERF", "FURB", "LOG", "RUF"]
+ignore = ["S101", "S104", "S108", "S110", "S112", "S311", "S603", "S607"]
+
+[tool.black]
+target-version = ['py311']
+line-length = 88
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
