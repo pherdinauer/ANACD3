@@ -74,15 +74,19 @@ class HTTPClient:
         self._wait_for_rate_limit()
         
         try:
+            console.print(f"[blue]DEBUG: Making GET request to {url}[/blue]")
             response = self.client.get(url, headers=headers)
             response.raise_for_status()
             
+            console.print(f"[blue]DEBUG: Response status: {response.status_code}, content length: {len(response.content)}[/blue]")
             headers = dict(response.headers)
             return response.content, headers, None
             
         except httpx.RequestError as e:
+            console.print(f"[red]DEBUG: GET request failed: {e}[/red]")
             return b"", {}, str(e)
         except httpx.HTTPStatusError as e:
+            console.print(f"[red]DEBUG: HTTP error {e.response.status_code}: {e.response.text}[/red]")
             return b"", {}, f"HTTP {e.response.status_code}: {e.response.text}"
     
     def get_streaming(self, url: str, headers: Optional[Dict[str, str]] = None):
