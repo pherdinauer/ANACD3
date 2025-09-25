@@ -298,6 +298,16 @@ class ANACCrawler:
             empty_pages = 0
             all_datasets = []
             
+            # Test HTTPClient before starting progress
+            console.print(f"[blue]DEBUG: Testing HTTPClient before crawl...[/blue]")
+            test_content, test_headers, test_error = http_client.get('https://dati.anticorruzione.it/opendata/dataset?page=1')
+            if test_error:
+                console.print(f"[red]HTTPClient test failed: {test_error}[/red]")
+                return stats
+            else:
+                test_html = test_content.decode('utf-8', errors='ignore')
+                console.print(f"[blue]HTTPClient test: {len(test_html)} characters, has datasets: {'dataset-item' in test_html}[/blue]")
+            
             with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
