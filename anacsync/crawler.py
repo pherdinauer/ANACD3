@@ -301,6 +301,7 @@ class ANACCrawler:
         }
         
         with HTTPClient(self.config) as http_client:
+            console.print(f"[blue]DEBUG: Created HTTPClient with config: {self.config.base_url}[/blue]")
             # Crawl dataset pages
             page_num = self.config.crawler.page_start
             empty_pages = 0
