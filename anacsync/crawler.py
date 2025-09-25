@@ -104,8 +104,12 @@ class ANACCrawler:
         datasets = []
         seen_slugs = set()
         
+        console.print(f"[blue]DEBUG: parse_dataset_page called with {len(html)} characters[/blue]")
+        
         # First, try to find dataset items with specific classes
         dataset_items = parser.css('.dataset-item')
+        console.print(f"[blue]DEBUG: Found {len(dataset_items)} .dataset-item elements[/blue]")
+        
         for item in dataset_items:
             # Look for links within dataset items
             links = item.css('a')
@@ -144,7 +148,13 @@ class ANACCrawler:
         
         # If no dataset items found, fall back to finding all links with dataset URLs
         if not datasets:
+            console.print(f"[yellow]DEBUG: No datasets found via .dataset-item, trying fallback method[/yellow]")
             all_links = parser.css('a')
+            console.print(f"[blue]DEBUG: Found {len(all_links)} total links[/blue]")
+            
+            dataset_links = [link for link in all_links if '/opendata/dataset/' in link.attributes.get('href', '')]
+            console.print(f"[blue]DEBUG: Found {len(dataset_links)} links with /opendata/dataset/[/blue]")
+            
             for link in all_links:
                 href = link.attributes.get('href')
                 if not href or '/opendata/dataset/' not in href:
