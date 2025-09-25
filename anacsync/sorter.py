@@ -15,6 +15,82 @@ from .utils import (
 
 console = Console()
 
+# Mapping from dataset slugs to directory names based on existing structure
+DATASET_TO_DIRECTORY_MAPPING = {
+    # OCDS datasets
+    'ocds-appalti-ordinari-2022': 'aggiudicazioni_json',
+    'ocds-appalti-ordinari-2023': 'aggiudicazioni_json', 
+    'ocds-appalti-ordinari-2024': 'aggiudicazioni_json',
+    'ocds-appalti-ordinari-2025': 'aggiudicazioni_json',
+    'ocds-appalti-ordinari-2021': 'aggiudicazioni_json',
+    'ocds-appalti-ordinari-2020': 'aggiudicazioni_json',
+    'ocds-appalti-ordinari-2019': 'aggiudicazioni_json',
+    'ocds-appalti-ordinari-2018': 'aggiudicazioni_json',
+    
+    # CIG datasets
+    'cig': 'cig_json',
+    'cig-2023': 'cig_json',
+    'cig-2022': 'cig_json', 
+    'cig-2021': 'cig_json',
+    'cig-2020': 'cig_json',
+    'cig-2019': 'cig_json',
+    'cig-2018': 'cig_json',
+    'cig-2017': 'cig_json',
+    'cig-2016': 'cig_json',
+    'cig-2015': 'cig_json',
+    'cig-2014': 'cig_json',
+    'cig-2013': 'cig_json',
+    'cig-2012': 'cig_json',
+    'cig-2011': 'cig_json',
+    'cig-2010': 'cig_json',
+    'cig-2009': 'cig_json',
+    'cig-2008': 'cig_json',
+    'cig-2007': 'cig_json',
+    
+    # SmartCIG datasets
+    'smartcig': 'smartcig_json',
+    'smartcig-2023': 'smartcig_json',
+    'smartcig-2022': 'smartcig_json',
+    'smartcig-2021': 'smartcig_json', 
+    'smartcig-2020': 'smartcig_json',
+    'smartcig-2019': 'smartcig_json',
+    'smartcig-2018': 'smartcig_json',
+    'smartcig-2017': 'smartcig_json',
+    'smartcig-2016': 'smartcig_json',
+    'smartcig-2015': 'smartcig_json',
+    'smartcig-2014': 'smartcig_json',
+    'smartcig-2013': 'smartcig_json',
+    'smartcig-2012': 'smartcig_json',
+    'smartcig-2011': 'smartcig_json',
+    
+    # Direct mappings
+    'aggiudicatari': 'aggiudicatari_json',
+    'aggiudicazioni': 'aggiudicazioni_json',
+    'avvio-contratto': 'avvio-contratto_json',
+    'bandi-cig-modalita-realizzazione': 'bandi-cig-modalita-realizzazione_json',
+    'bandi-cig-tipo-scelta-contraente': 'bandi-cig-tipo-scelta-contraente_json',
+    'bando_cig': 'bando_cig_json',
+    'categorie-dpcm-aggregazione': 'categorie-dpcm-aggregazione_json',
+    'categorie-opera': 'categorie-opera_json',
+    'centri-di-costo': 'centri-di-costo_json',
+    'collaudo': 'collaudo_json',
+    'cup': 'cup_json',
+    'fine-contratto': 'fine-contratto_json',
+    'fonti-finanziamento': 'fonti-finanziamento_json',
+    'indicatori-pnrrpnc': 'indicatori-pnrrpnc_json',
+    'lavorazioni': 'lavorazioni_json',
+    'misurepremiali-pnrrpnc': 'misurepremiali-pnrrpnc_json',
+    'partecipanti': 'partecipanti_json',
+    'pubblicazioni': 'pubblicazioni_json',
+    'quadro-economico': 'quadro-economico_json',
+    'sospensioni': 'sospensioni_json',
+    'stati-avanzamento': 'stati-avanzamento_json',
+    'stazioni-appaltanti': 'stazioni-appaltanti_json',
+    'subappalti': 'subappalti_json',
+    'varianti': 'varianti_json',
+    'smartcig-tipo-fattispecie-contrattuale': 'smartcig-tipo-fattispecie-contrattuale_json'
+}
+
 
 class FileSorter:
     """File sorter that applies configurable rules."""
@@ -27,6 +103,39 @@ class FileSorter:
         
         # Load existing inventory
         self.inventory = {r['path']: r for r in load_jsonl(self.inventory_file)}
+    
+    def get_target_directory(self, dataset_slug: str) -> str:
+        """Get target directory for a dataset slug based on existing structure."""
+        # First try direct mapping
+        if dataset_slug in DATASET_TO_DIRECTORY_MAPPING:
+            return DATASET_TO_DIRECTORY_MAPPING[dataset_slug]
+        
+        # Fallback: create directory name from slug
+        return f"{dataset_slug}_json"
+    
+    def verify_existing_files(self, dataset_slug: str) -> List[Dict[str, Any]]:
+        """Verify existing files for a dataset in the target directory."""
+        target_dir_name = self.get_target_directory(dataset_slug)
+        target_dir = self.root_dir / target_dir_name
+        
+        existing_files = []
+        
+        if target_dir.exists() and target_dir.is_dir():
+            for file_path in target_dir.iterdir():
+                if file_path.is_file() and file_path.suffix.lower() in {'.json', '.ndjson', '.csv', '.xlsx', '.xml', '.zip'}:
+                    try:
+                        stat = file_path.stat()
+                        existing_files.append({
+                            'path': str(file_path),
+                            'name': file_path.name,
+                            'size': stat.st_size,
+                            'mtime': stat.st_mtime,
+                            'dataset_slug': dataset_slug
+                        })
+                    except OSError:
+                        continue
+        
+        return existing_files
     
     def _evaluate_condition(self, condition: str, context: Dict[str, Any]) -> bool:
         """Evaluate a sorting condition against file context."""

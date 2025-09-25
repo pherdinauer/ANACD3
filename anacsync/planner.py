@@ -87,8 +87,13 @@ class DownloadPlanner:
         # Make filename safe
         filename = safe_filename(filename)
         
+        # Use sorter to determine target directory
+        from .sorter import FileSorter
+        sorter = FileSorter(self.config)
+        target_dir_name = sorter.get_target_directory(resource['dataset_slug'])
+        
         # Create dataset directory
-        dataset_dir = self.root_dir / safe_filename(resource['dataset_slug'])
+        dataset_dir = self.root_dir / target_dir_name
         ensure_directory(dataset_dir)
         
         return str(dataset_dir / filename)
@@ -100,15 +105,30 @@ class DownloadPlanner:
             if local_file.get('url') == resource['url']:
                 return local_file
         
-        # Strategy 2: Match by dataset slug and filename
-        resource_name = resource.get('name', '')
-        if resource_name:
+        # Strategy 2: Check existing files in target directory
+        from .sorter import FileSorter
+        sorter = FileSorter(self.config)
+        existing_files = sorter.verify_existing_files(resource['dataset_slug'])
+        
+        resource_filename = resource.get('name', '')
+        if resource_filename:
+            for existing_file in existing_files:
+                if existing_file['name'] == resource_filename:
+                    return {
+                        'path': existing_file['path'],
+                        'size': existing_file['size'],
+                        'mtime': existing_file['mtime'],
+                        'dataset_slug': existing_file['dataset_slug']
+                    }
+        
+        # Strategy 3: Match by dataset slug and filename in inventory
+        if resource_filename:
             for local_file in inventory.values():
                 if (local_file.get('dataset_slug') == resource['dataset_slug'] and
-                    resource_name in local_file['path']):
+                    resource_filename in local_file['path']):
                     return local_file
         
-        # Strategy 3: Match by filename pattern
+        # Strategy 4: Match by filename pattern
         filename = extract_filename_from_url(resource['url'])
         if filename:
             for local_file in inventory.values():
