@@ -195,7 +195,8 @@ class ANACCrawler:
                 continue
             
             # Look for direct download links (preferred) or resource links
-            is_download_link = '/download/' in url and any(url.endswith(ext) for ext in ['.json', '.csv', '.xlsx', '.xml', '.zip'])
+            # Only look for JSON files as requested
+            is_download_link = '/download/' in url and url.endswith('.json')
             is_resource_link = '/resource/' in url
             
             if not (is_download_link or is_resource_link):
@@ -212,18 +213,8 @@ class ANACCrawler:
                     if path_parts:
                         name = path_parts[-1]
             
-            # Determine format from extension
-            format_type = 'UNKNOWN'
-            if url.endswith('.json'):
-                format_type = 'JSON'
-            elif url.endswith('.csv'):
-                format_type = 'CSV'
-            elif url.endswith('.xlsx'):
-                format_type = 'XLSX'
-            elif url.endswith('.xml'):
-                format_type = 'XML'
-            elif url.endswith('.zip'):
-                format_type = 'ZIP'
+            # Determine format from extension - only JSON files
+            format_type = 'JSON'  # We only process JSON files now
             
             # Only add if we have a valid name and format
             if name and format_type != 'UNKNOWN':

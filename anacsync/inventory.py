@@ -59,8 +59,8 @@ class InventoryScanner:
         # Load existing inventory
         self.existing_files = {r['path']: r for r in load_jsonl(self.inventory_file)}
         
-        # Supported file extensions
-        self.supported_extensions = {'.json', '.ndjson', '.csv', '.xlsx', '.xml', '.zip'}
+        # Supported file extensions - only JSON files
+        self.supported_extensions = {'.json', '.ndjson'}
     
     def is_supported_file(self, file_path: Path) -> bool:
         """Check if file has supported extension."""

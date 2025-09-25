@@ -122,7 +122,7 @@ class FileSorter:
         
         if target_dir.exists() and target_dir.is_dir():
             for file_path in target_dir.iterdir():
-                if file_path.is_file() and file_path.suffix.lower() in {'.json', '.ndjson', '.csv', '.xlsx', '.xml', '.zip'}:
+                if file_path.is_file() and file_path.suffix.lower() in {'.json', '.ndjson'}:
                     try:
                         stat = file_path.stat()
                         existing_files.append({
