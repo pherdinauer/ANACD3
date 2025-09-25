@@ -40,9 +40,10 @@ class HTTPClient:
         current_time = time.time()
         time_since_last = current_time - self.last_request_time
         
-        if time_since_last < self.rate_limit:
-            sleep_time = self.rate_limit - time_since_last
-            time.sleep(sleep_time)
+        # Temporarily disable rate limiting for debugging
+        # if time_since_last < self.rate_limit:
+        #     sleep_time = self.rate_limit - time_since_last
+        #     time.sleep(sleep_time)
         
         self.last_request_time = time.time()
     
