@@ -324,6 +324,7 @@ class ANACCrawler:
                     )
             
             stats['datasets_found'] = len(all_datasets)
+            console.print(f"[blue]Total datasets found: {len(all_datasets)}[/blue]")
             
             # Process datasets
             new_datasets = []
