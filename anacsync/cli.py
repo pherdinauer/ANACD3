@@ -114,7 +114,7 @@ def handle_plan(config: Config):
         filter_slug = Prompt.ask("Enter dataset slug pattern")
     
     try:
-        plan_items = make_plan(config, only_missing, filter_slug)
+        plan_items = make_plan(config, only_missing, filter_slug, auto_scan=True)
         
         if plan_items:
             console.print(f"\n[green]✓ Plan generated with {len(plan_items)} items[/green]")

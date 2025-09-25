@@ -143,10 +143,18 @@ class DownloadPlanner:
     def make_plan(
         self, 
         only_missing: bool = True, 
-        filter_slug: Optional[str] = None
+        filter_slug: Optional[str] = None,
+        auto_scan: bool = True
     ) -> List[PlanItem]:
         """Generate download plan."""
         console.print("[bold blue]Generating download plan...[/bold blue]")
+        
+        # Auto-scan local files if requested
+        if auto_scan:
+            console.print("[blue]Auto-scanning local files...[/blue]")
+            from .inventory import scan_local
+            scan_local(self.config)
+            console.print("[green]Local files scanned successfully[/green]")
         
         # Load data
         datasets, resources = self.load_catalog()
@@ -317,9 +325,10 @@ class DownloadPlanner:
 def make_plan(
     config: Config, 
     only_missing: bool = True, 
-    filter_slug: Optional[str] = None
+    filter_slug: Optional[str] = None,
+    auto_scan: bool = True
 ) -> List[PlanItem]:
     """Main function to generate download plan."""
     planner = DownloadPlanner(config)
-    return planner.make_plan(only_missing, filter_slug)
+    return planner.make_plan(only_missing, filter_slug, auto_scan)
 
